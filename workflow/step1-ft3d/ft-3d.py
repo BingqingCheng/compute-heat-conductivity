@@ -25,26 +25,14 @@ def read_lammpstrj(filedesc):
     comment = filedesc.readline()
     names = np.zeros(natoms,np.dtype('|S6'))
     q = np.zeros((natoms,3),float)
-    orderp = np.zeros(natoms,float)
     v = np.zeros((natoms,3),float)
 
     for i in range(natoms):
         line = filedesc.readline().split();
         names[i] = line[1] # atom type
         q[i] = line[2:5] # wrapped atomic coordinates
-        orderp[i] = float(line[5])+float(line[6]) # The 6/7th column is the PE/KE energy of each atom
         v[i] = line[7:10] # atomic velocities
-    return [cell, names, q, orderp, v]
-
-def FT_energy(phi, q, kgrid):
-    # This is the un-normalized FT for energy fluctations
-    ng = len(kgrid)
-    ak = np.zeros(ng,dtype=complex)
-
-    for n,k in enumerate(kgrid):
-        ak[n] = np.sum(phi[:]*np.exp(-1j*(q[:,0]*k[0]+q[:,1]*k[1]+q[:,2]*k[2])))
-
-    return ak
+    return [cell, names, q, v]
 
 def FT_density(q, kgrid):
     # This is the un-normalized FT for density fluctuations
@@ -76,8 +64,6 @@ def main(sprefix="ft3d", straj="df", replica='1', sbins=8):
     print("Reading file:", straj,".lammpstrj")
     traj = open(straj+'.lammpstrj-part-'+str(replica),"r")
     # Outputs
-    ofile = open(sprefix+'-energy-real.dat-part-'+str(replica),"ab")
-    oifile = open(sprefix+'-energy-imag.dat-part-'+str(replica),"ab")
     odenfile = open(sprefix+'-density-real.dat-part-'+str(replica),"ab")
     oidenfile = open(sprefix+'-density-imag.dat-part-'+str(replica),"ab")
     ojxfile = open(sprefix+'-jx-real.dat-part-'+str(replica),"ab")
@@ -96,7 +82,7 @@ def main(sprefix="ft3d", straj="df", replica='1', sbins=8):
         start_time = time.time()
         # read frame
         try:
-            [ cell, names, q, phi, v ] = read_lammpstrj(traj)
+            [ cell, names, q, v ] = read_lammpstrj(traj)
         except:
             break
         nframe += 1
@@ -136,11 +122,6 @@ def main(sprefix="ft3d", straj="df", replica='1', sbins=8):
             np.savetxt('transkgridx.dat-part-'+str(replica),transgridx)
             np.savetxt('transkgridy.dat-part-'+str(replica),transgridy)
         print("--- %s seconds after read frame ---" % (time.time() - start_time))
-        # FT analysis of energy fluctuations
-        ak = normfactor*FT_energy(phi, q, kgrid)
-        np.savetxt(ofile,ak[None].real, fmt='%4.4e', delimiter=' ',header="Frame No: "+str(nframe))
-        np.savetxt(oifile,ak[None].imag, fmt='%4.4e', delimiter=' ',header="Frame No: "+str(nframe))
-        print("--- %s seconds after FFT energy ---" % (time.time() - start_time))
         # FT analysis of density fluctuations
         akden = normfactor*FT_density(q, kgrid)
         np.savetxt(odenfile,akden[None].real, fmt='%4.4e', delimiter=' ',header="Frame No: "+str(nframe))
@@ -158,8 +139,6 @@ def main(sprefix="ft3d", straj="df", replica='1', sbins=8):
 
     print("A total of data points ", nframe)
 
-    ofile.close()
-    odenfile.close()
     sys.exit()
 
 
