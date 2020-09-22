@@ -19,12 +19,6 @@ export OMP_NUM_THREADS=1
 
 python ../ft-time.py density-real 1000 &> tmplog1 &
 python ../ft-time.py density-imag 1000 &> tmplog2 &
-python ../ft-time.py jx-real 500 &> tmplog3 &
-python ../ft-time.py jx-imag 500 &> tmplog4 &
-python ../ft-time.py jy-real 500 &> tmplog5 &
-python ../ft-time.py jy-imag 500 &> tmplog6 &
-python ../ft-time.py energy-real 1000 &> tmplog7 &
-python ../ft-time.py energy-imag 1000 &> tmplog8 &
 wait
 
 rm tmplog?
