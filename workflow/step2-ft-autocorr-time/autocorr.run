@@ -1,0 +1,46 @@
+#!/bin/bash -l
+#
+# CP2K on Piz Daint
+#SBATCH -A s957
+#SBATCH --job-name=autocorr
+#SBATCH --time=01:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --partition=normal
+#SBATCH --constraint=gpu
+
+
+#========================================
+# load modules and run simulation
+module load daint-gpu
+
+export OMP_NUM_THREADS=1
+
+prefix=$1
+maxlag=$2
+
+for a in `seq 1 512`; do
+awk -v a=$a '!/#/{print $a}' df-${prefix}.dat | autocorr -maxlag ${maxlag} > autocorr-${prefix}.$a; 
+wait
+awk -v a=$a '!/#/{print $a}' df-${prefix}.dat | autocorr -maxlag ${maxlag} > autocorr-${prefix}.$a;
+wait
+done
+
+awk '!/#/{print $2}' autocorr-${prefix}.1 > tmp-autocorr-${prefix}.dat 
+for a in `seq 2 512`; do 
+awk '!/#/{print $2}' autocorr-${prefix}.$a > tmp1-autocorr-${prefix}.dat
+paste tmp-autocorr-${prefix}.dat tmp1-autocorr-${prefix}.dat > tmp2-autocorr-${prefix}.dat 
+mv tmp2-autocorr-${prefix}.dat  tmp-autocorr-${prefix}.dat
+done
+mv tmp-autocorr-${prefix}.dat autocorr-${prefix}.dat
+
+for a in `seq 1 512`; do 
+info=$(head -n 1 autocorr-${prefix}.$a); 
+echo $a $info; 
+done >  autocorrtime-${prefix}.dat
+
+rm autocorr-${prefix}.{1..512}
+rm tmp1-autocorr-${prefix}.dat
+
+wait

@@ -1,0 +1,53 @@
+#!/bin/bash -l
+#
+# CP2K on Piz Daint
+#SBATCH -A s957
+#SBATCH --job-name=python
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=12
+#SBATCH --cpus-per-task=1
+#SBATCH --partition=normal
+#SBATCH --constraint=gpu
+
+
+#========================================
+# load modules and run simulation
+module load daint-gpu
+
+export OMP_NUM_THREADS=1
+
+for a in `seq 1 12`; do
+#srun --hint=nomultithread --exclusive -n 1 
+python ../ft-3d.py df df $a &> log-$a &
+#sleep 1
+done
+
+wait
+
+for p in `seq 1 12`; do
+cat df-energy-real.dat-part-$p; done > df-energy-real.dat;
+for p in `seq 1 12`; do
+cat df-energy-imag.dat-part-$p; done > df-energy-imag.dat;
+for p in `seq 1 12`; do
+cat df-density-real.dat-part-$p; done > df-density-real.dat;
+for p in `seq 1 12`; do
+cat df-density-imag.dat-part-$p; done > df-density-imag.dat;
+
+for p in `seq 1 12`; do
+cat df-jx-real.dat-part-$p; done > df-jx-real.dat;
+for p in `seq 1 12`; do
+cat df-jx-imag.dat-part-$p; done > df-jx-imag.dat;
+for p in `seq 1 12`; do
+cat df-jy-real.dat-part-$p; done > df-jy-real.dat;
+for p in `seq 1 12`; do
+cat df-jy-imag.dat-part-$p; done > df-jy-imag.dat;
+
+
+
+cp kgrid.dat-part-1 kgrid.dat;
+cp transkgridx.dat-part-1 transkgridx.dat
+cp transkgridy.dat-part-1 transkgridy.dat
+rm df-energy-real.dat-part-* df-energy-imag.dat-part-* df-density-real.dat-part-* df-density-imag.dat-part-* df-j?-real.dat-part-* kgrid.dat-part-* transkgrid?.dat-part-* log-{1..12}
+
+wait

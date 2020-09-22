@@ -33,11 +33,11 @@ def C_k_t(t,ksqr,gamma,DT,cs,b):
     Ckt += 1./gamma*np.exp(-ca*ksqr*t)*np.cos(cs*k*t)
     return Ckt
 
-def main(stemperature=1.0, sdensity=0.2, sysname="density-real"):
+def main(stemperature=1.0, sdensity=0.2, sysname="density-real", snumk="512"):
 
     temperature = round(float(stemperature),1)
     density = round(float(sdensity),1)
-    numk = 512
+    numk = int(snumk)
     timestep = 0.0025 * 20
 
     # read in the thermal properties
@@ -81,4 +81,4 @@ def main(stemperature=1.0, sdensity=0.2, sysname="density-real"):
     np.savetxt("fit-autocorr-"+sysname+".dat", results_no_nan,header='# k_sqr kx ky kz lambda lambda_error b b_error')
 
 if __name__ == '__main__':
-    main(sys.argv[1],sys.argv[2], sys.argv[3])
+    main(sys.argv[1],sys.argv[2], sys.argv[3], sys.argv[4])
